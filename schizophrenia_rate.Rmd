@@ -1,0 +1,319 @@
+---
+output:
+title: "603 project"
+  pdf_document: default
+  html_document: default
+---
+
+
+Project "Dependence of schizophrenia disorder on different world development and healthcare systems indicators"
+
+
+Preparing the data:
+
+Loading libraries
+```{r}
+library(ggplot2)
+library(olsrr)
+library(dplyr)
+library(lmtest)
+library(mctest)
+library(GGally)
+library(MASS)
+library(stats)
+```
+
+Loading datasets:
+```{r}
+mhd <- read.csv('MentalHealthDisorders.csv')
+wdi <- read.csv('WDIData_T.csv')
+beds_mhh_p100t <- read.csv('beds_in_mental_health_hospitals_per_100thousands.csv')
+beds_mhg_p100t <- read.csv('beds_for_mh_in_general_hospital_per100thousand_2019.csv')
+psycho_p100t <- read.csv('psychologists_in_mental_health_per_100thousands.csv')
+psychi_p100t <- read.csv('psychiatrists_in_mental_health.csv')
+sw_p100t <- read.csv('social_workers_in_mental_health_per_100thousands.csv')
+
+```
+
+```{r}
+sw_p100t
+```
+
+
+Select only 2017 year for the research from dataset with different mental disorders rates worldwide:
+```{r}
+mhd <- mhd[0:6468, ]
+mhd2  <- mhd[mhd$Year == 2017  , ]
+mhd2
+```
+
+The entire dataset with different World Development indicator contains more than 1400 indicators. For initial hypothesis about factors which can influence to the schizophrenia rate is the indicators should be from the following groups:
+1. Economic factors, such as GDP, healthcare system expenditures
+2. World development indicators. such as education indicators, urbanization, social factors, environmental indicators
+3. Demographic indicators
+4. HealthCare System indicators
+
+
+
+At the first step it was decided to select these variables by 3 ways:
+1. At first, some factors were selected to check by decision to understand is there any significant correlation between schizophrenia and such factors as:
+- GPD per capita
+- Current health expenditure per capita
+- Duration of education (primary and secondary)
+- Urban population (number and in % of total)
+
+2. Secondly, for checking independent and significant variables the stepwise method was implemented for World Development Indicator dataset contained of more than 1400 indicators worldwide. By this method the next factors were selected:
+- Primary school starting age (years)
+- Rural population
+- Birth rate, crude (per 1,000 people)
+- People using at least basic drinking water services (% of population)
+- PM2.5 air pollution, population exposed to levels exceeding WHO guideline value (% of total)
+
+Therefore, from dataset with World Development Indicators were selected next variables:
+```{r}
+wdi$Year
+```
+
+```{r}
+wdi2 = wdi[wdi$Year == 2017, ]
+wdi_codes <- c('NY.GDP.PCAP.CD',
+'SH.XPD.CHEX.PC.CD',
+'SE.PRM.DURS',
+'SE.SEC.DURS',
+'SP.URB.TOTL.IN.ZS',
+'SE.PRM.AGES',
+'EN.ATM.PM25.MC.ZS',
+'SP.RUR.TOTL',
+'SH.H2O.BASW.ZS',
+'SP.DYN.CBRT.IN',
+'SP.URB.TOTL')
+for (col in wdi_codes){
+  print(paste(col, ':', wdi2[wdi2$IndicatorCode == col, ]$IndicatorName[3]))
+}
+```
+3. In addition, the healthcare systems indicators were selected from official WHO datasets (https://www.who.int/data/gho/data/indicators) :
+- Psychiatrists working in mental health sector (per 100,000)
+- Psychologists working in mental health sector (per 100,000)
+- Beds for mental health in general hospitals (per 100,000)
+- Beds in mental hospitals (per 100,000)
+
+```{r}
+Code1 = wdi_codes[1]
+df_wdi = wdi2[wdi2$IndicatorCode == Code1, ][c('CountryCode', 'Year', 'Value')]
+colnames(df_wdi) <- c( 'CountryCode', 'Year', Code1)
+for (Code2 in wdi_codes[2:length(wdi_codes)])
+{
+  df2 = wdi2[wdi2$IndicatorCode == Code2, ][c('CountryCode', 'Year', 'Value')]
+  colnames(df2) <- c('CountryCode', 'Year', Code2)
+  df_wdi <- merge(x = df_wdi, y = df2, by = c('CountryCode', 'Year'), all = TRUE)
+}
+df_wdi
+```
+
+```{r}
+shizo <- mhd2[c('Year','Code', 'Schizophrenia....')]
+colnames(shizo) <- c('Year','CountryCode', 'Schizo')
+shizo$Schizo <- as.numeric(shizo$Schizo)
+df3 <- merge(x = shizo, y = df_wdi, by = c('CountryCode', 'Year'))
+df3 <- na.omit(df3[ , colSums(is.na(df3))<5])
+
+df_temp <- psychi_p100t[c('SpatialDimValueCode', 'Value')]
+colnames(df_temp) <- c('CountryCode', 'psychi_p100t')
+df3 <- merge(x = df3, y = df_temp, by = c('CountryCode'), all = FALSE)
+df_temp <- beds_mhh_p100t[c('SpatialDimValueCode', 'Value')]
+colnames(df_temp) <- c('CountryCode', 'beds_mhh_p100t')
+df3 <- merge(x = df3, y = df_temp, by = c('CountryCode'),  all = FALSE)
+#df3 <- merge(x = df3, y = df_wdi, by = c('CountryCode', 'Year'), all = FALSE)
+df_temp <- psycho_p100t[c('SpatialDimValueCode', 'Value')]
+colnames(df_temp) <- c('CountryCode', 'psycho_p100t')
+df3 <- merge(x = df3, y = df_temp, by = c('CountryCode'), all = FALSE)
+df_temp <- beds_mhg_p100t[c('SpatialDimValueCode', 'Value')]
+colnames(df_temp) <- c('CountryCode', 'beds_mhg_p100t')
+df3 <- merge(x = df3, y = df_temp, by = c('CountryCode'),  all = FALSE)
+df3 <- na.omit(df3)
+
+df3
+```
+
+For these parameters the linear model was created and the stepwise regression procedure was launched:
+
+
+```{r}
+
+dependent_variable <- 'Schizo'
+independent_variables <- colnames(df3[5:length(df3)])
+formula <- paste(dependent_variable, "~ (", paste(independent_variables, collapse=" + "), ')')
+print(formula)
+model <- lm(formula, data = df3)
+summary(model)
+```
+```{r}
+stepwise <-ols_step_both_p(model, pent = 0.1, prem = 0.3, details = FALSE)
+print(stepwise$predictors)
+dependent_variable <- 'Schizo'
+independent_variables <- stepwise$predictors
+for (col in independent_variables){
+  print(paste(col, ':', wdi2[wdi2$IndicatorCode == col, ]$IndicatorName[3]))
+}
+formula2 <- paste(dependent_variable, "~(", paste(independent_variables, collapse=" + "), ')')
+
+print(formula2)
+model2 <- lm(formula2, data = df3)
+summary(model2)
+```
+
+
+In the result only 6 variables were selected as independent and significant: 
+- "EN.ATM.PM25.MC.ZS : PM2.5 air pollution, population exposed to levels exceeding WHO guideline value (% of total)"
+- "SH.H2O.BASW.ZS : People using at least basic drinking water services (% of population)"
+- "SE.PRM.AGES : Primary school starting age (years)"
+- "psycho_p100t : Psychologists working in mental health sector (per 100,000)"
+- "SP.URB.TOTL : Urban population"
+- "beds_mhh_p100t : Beds in mental hospitals (per 100,000)"
+
+
+```{r}
+png("pairs.png", units = "in", width = 15, height = 12, res = 300)
+pairs(Schizo ~ (EN.ATM.PM25.MC.ZS + SH.H2O.BASW.ZS + factor(SE.PRM.AGES) + psycho_p100t + SP.URB.TOTL + beds_mhh_p100t ), data = df3)
+dev.off() 
+```
+```{r}
+model_h <- lm(Schizo ~ EN.ATM.PM25.MC.ZS + SH.H2O.BASW.ZS + SE.PRM.AGES + psycho_p100t + I(psycho_p100t^2)+ SP.URB.TOTL + beds_mhh_p100t, data = df3 )
+summary(model_h)
+```
+ 
+
+The testing of higher orders for different variables showed that the higher order variables gives not sifnificant influence. Therefore, it was decided not to use any higher orders in the model
+
+However, the testing of model with interactions showed that the interaction betwee EN.ATM.PM25.MC.ZS:psycho_p100t gives the significant value and can be kept with p-value 0.001004 after the individual t.test.
+The full table for indivitual t-test is given below.
+The result of Breucsh-Pagan test if provided bellow, which shows that p-value > 0.05. It means that the distribution of residuals follow the homoscedasticity assumption. 
+
+```{r}
+model1 <- model2
+model3 <- lm(Schizo ~ (EN.ATM.PM25.MC.ZS + SH.H2O.BASW.ZS + factor(SE.PRM.AGES) + psycho_p100t + SP.URB.TOTL + beds_mhh_p100t)^2, data = df3)
+model2h <- lm(Schizo ~ (EN.ATM.PM25.MC.ZS + SH.H2O.BASW.ZS + factor(SE.PRM.AGES) + psycho_p100t +  I(psycho_p100t^2) + SP.URB.TOTL + beds_mhh_p100t + EN.ATM.PM25.MC.ZS:psycho_p100t), data = df3)
+model2 <- lm(Schizo ~ (EN.ATM.PM25.MC.ZS + SH.H2O.BASW.ZS + factor(SE.PRM.AGES) + psycho_p100t  + SP.URB.TOTL + beds_mhh_p100t + EN.ATM.PM25.MC.ZS:psycho_p100t), data = df3)
+bptest(model2)
+summary(model2)
+```
+```{r}
+anova(model2h, model2h)
+```
+
+ANOVA Test:
+
+```{r}
+
+const_model <- lm(Schizo ~ 1, data = df3)
+anova(model1, model2)
+```
+```{r}
+anova(model1, model3)
+```
+```{r}
+sqrt(mean(model2$residuals^2))
+```
+
+
+
+Multiple Regression Analysis
+
+1. Linear Assumption
+
+```{r}
+#png("1.linear_assumprion.png", units = "in", width = 6, height = 4, res = 300)
+plot(model2, which = 1)
+#dev.off()
+```
+The plot shows that linear assumption is correct for this model. 
+
+```{r}
+#png("1.linear_assumprion2.png", units = "in", width = 6, height = 4, res = 300)
+ggplot(model2, aes(x=.fitted, y=.resid)) + geom_point() + geom_smooth()+ geom_hline(yintercept = 0)
+#dev.off()
+```
+
+2. Independence Assumption
+```{r}
+#png("2.independence_assumprion.png", units = "in", width = 6, height = 4, res = 300)
+ggplot(model2, aes(x=as.numeric(row.names(model.frame(model2))), y=.resid)) + geom_point() + geom_smooth()+ geom_hline(yintercept = 0) + xlab('Number of observation') +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+#dev.off()
+
+```
+
+The plot shows that there is not significant dependence of residuals on the number of observation. It means that independence assumption is correct for this model.
+
+3. Normality Assumptions
+```{r}
+#png("3.normality_assumprion.png", units = "in", width = 6, height = 4, res = 300)
+qplot(residuals(model2),
+geom="histogram",
+binwidth = 0.01,
+main = "Histogram of residuals",
+xlab = "residuals", color="red",
+fill=I("blue"))
+#dev.off()
+```
+```{r}
+#png("3.normality_assumprion_qqplot.png", units = "in", width = 6, height = 4, res = 300)
+ggplot(df3, aes(sample=model2$residuals)) + stat_qq() + stat_qq_line()
+#dev.off()
+```
+```{r}
+shapiro.test(residuals(model2))
+```
+For normality assumption the normal distribution plot, QQplot and Shapiro-Wilk normality test are used. The result shows that normality assumption for the model is correct
+
+4. Equal Vairanve Assumption
+```{r}
+#png("4.equal_variance_assumprion.png", units = "in", width = 6, height = 4, res = 300)
+ggplot(model2, aes(x=.fitted, y=.resid)) +
+geom_point() +
+geom_hline(yintercept = 0) +
+geom_smooth()+
+ggtitle("Residual plot: Residual vs Fitted values")
+#dev.off()
+```
+```{r}
+bptest(model2)
+```
+For the homoscedasticity assumption the residuals-fitted value plot and Breusch-Pagan test were used. Both results shows that the homoscedasticity is present in this model.
+
+5. Multicolinearity - VIF
+```{r}
+imcdiag(model2, method="VIF")
+```
+```{r}
+library(car)
+vif(model2)
+```
+
+
+```{r}
+pairs(Schizo ~ EN.ATM.PM25.MC.ZS + SH.H2O.BASW.ZS + factor(SE.PRM.AGES) + 
+    psycho_p100t + SP.URB.TOTL + beds_mhh_p100t + EN.ATM.PM25.MC.ZS:psycho_p100t, data = df3)
+```
+
+6. Outliers   
+
+```{r}
+#png("6.outliers.png", units = "in", width = 6, height = 4, res = 300)
+plot(model2, which = c(4))
+#dev.off()
+```
+
+```{r}
+#png("6.leverage.png", units = "in", width = 6, height = 4, res = 300)
+lev1=hatvalues(model2)
+p = length(coef(model2))
+n = nrow(df3)
+plot(row.names(model.frame(model2)),lev1, main = "Leverage", xlab="observation", ylab = "Leverage Value")
+abline(h = 2 *p/n, lty = 1)
+abline(h = 3 *p/n, lty = 1)
+#dev.off()
+```
+
+
+
