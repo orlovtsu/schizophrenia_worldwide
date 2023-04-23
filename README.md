@@ -509,12 +509,12 @@ I would like to special thank [Dr. Quan Long ](https://www.linkedin.com/in/quanl
 
 
 ## References 
-[1] Centers for Disease Control and Prevention. (2021). About mental health. Centers for Disease Control and Prevention. Retrieved from https://www.cdc.gov/mentalhealth/learn/index.htm
-[2] World Health Organization. (2023). Mental health. World Health Organization. Retrieved from https://www.who.int/health-topics/mental-health#tab=tab_1
-[3] World Health Organization. (2023). Schizophrenia. World Health Organization. Retrieved from https://www.who.int/news-room/fact-sheets/detail/schizophrenia
-[4] American Psychiatric Association (2023). What is Schizophrenia? Retrieved from https://www.psychiatry.org/patients-families/schizophrenia/what-is-schizophrenia
-[5] Johns Hopkins Medicine (2023). Schizophrenia. Retrieved from https://www.hopkinsmedicine.org/health/conditions-and-diseases/schizophrenia
-[6] Brown AS. (2011). The environment and susceptibility to schizophrenia. Prog Neurobiol;93(1):23-58. doi: 10.1016/j.pneurobio.2010.09.003.
-[7] World Health Organization. (2023). Global Health Estimates. World Health Organization. Retrieved from https://www.who.int/data/global-health-estimates
-[8] The World Bank. (2017). World development indicators: The World Bank. World Development Indicators. Retrieved from: http://wdi.worldbank.org/table/2.12#
-[9] World Health Organization. (2023). Government expenditures on mental health as a percentage of total government expenditures on Health (%). World Health Organization. Retrieved from: https://www.who.int/data/gho/data/indicators/indicator-details/GHO/government-expenditures-on-mental-health-as-a-percentage-of-total-government-expenditures-on-health-(-)
+[1] Centers for Disease Control and Prevention. (2021). About mental health. Centers for Disease Control and Prevention. Retrieved from https://www.cdc.gov/mentalhealth/learn/index.htm <br />
+[2] World Health Organization. (2023). Mental health. World Health Organization. Retrieved from https://www.who.int/health-topics/mental-health#tab=tab_1 <br />
+[3] World Health Organization. (2023). Schizophrenia. World Health Organization. Retrieved from https://www.who.int/news-room/fact-sheets/detail/schizophrenia<br />
+[4] American Psychiatric Association (2023). What is Schizophrenia? Retrieved from https://www.psychiatry.org/patients-families/schizophrenia/what-is-schizophrenia<br />
+[5] Johns Hopkins Medicine (2023). Schizophrenia. Retrieved from https://www.hopkinsmedicine.org/health/conditions-and-diseases/schizophrenia<br />
+[6] Brown AS. (2011). The environment and susceptibility to schizophrenia. Prog Neurobiol;93(1):23-58. doi: 10.1016/j.pneurobio.2010.09.003.<br />
+[7] World Health Organization. (2023). Global Health Estimates. World Health Organization. Retrieved from https://www.who.int/data/global-health-estimates<br />
+[8] The World Bank. (2017). World development indicators: The World Bank. World Development Indicators. Retrieved from: http://wdi.worldbank.org/table/2.12#<br />
+[9] World Health Organization. (2023). Government expenditures on mental health as a percentage of total government expenditures on Health (%). World Health Organization. Retrieved from: https://www.who.int/data/gho/data/indicators/indicator-details/GHO/government-expenditures-on-mental-health-as-a-percentage-of-total-government-expenditures-on-health-(-)<br />
