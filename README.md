@@ -303,6 +303,11 @@ plot(model2, which = 1)
 ![Linear Assumption](/images/1.linear_assumprion.png)
 Fig.3. Linear Assumption testing 
 
+<i>R code:</i>
+```{r}
+ggplot(model2, aes(x=.fitted, y=.resid)) + geom_point() + geom_smooth()+ geom_hline(yintercept = 0)
+```
+
 ![Linear Assumption](/images/1.linear_assumprion2.png)
 Fig.4. Linear Assumption testing 
 
@@ -313,21 +318,203 @@ Based on the plots above, we do not detect any pattern between the residuals (er
 $H_0$: there is no significant relationship between the independent variables
 $H_A$: there is a significant relationship between the independent variables
 
+<i>R code:</i>
+```{r}
+ggplot(model2, aes(x=as.numeric(row.names(model.frame(model2))), y=.resid)) + geom_point() + geom_smooth()+ geom_hline(yintercept = 0) + xlab('Number of observation') + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+![Independence Assumption](/images/2.independence_assumprion.png)
+Fig.5. Independence Assumption testing 
+
+There is no significant dependence of residuals on the number of observations. Thus, we FAIL to reject our null hypothesis, and the independence assumption is met for our model
+
 3. Normality Assumption
 
 $H_0$: the residuals of the model are normally distributed
 $H_A$: the residuals of the model are NOT normally distributed
+
+<i>R code:</i>
+```{r}
+qplot(residuals(model2), geom="histogram", binwidth = 0.01, main = "Histogram of residuals", xlab = "residuals", color="red", fill=I("blue"))
+```
+
+![Normality Assumption](/images/3.normality_assumprion.png)
+Fig.6. Histogram of residuals for checking normality assumptions
+
+<i>R code:</i>
+```{r}
+ggplot(df3, aes(sample=model2$residuals)) + stat_qq() + stat_qq_line()
+```
+![QQplot](/images/3.normality_assumprion_qqplot.png)
+Fig.7. Q-Q plot used for checking normality assumption
+
+Based on the histogram in Figure 5, the residual distribution seems to follow a normal distribution. Additionally, the Q-Q plot also shows that the data are distributed close to the diagonal reference line. The graphs above suggest that the normality assumption is met. To further check the assumption, the Shapiro-Wilk normality test was performed:
+
+<i>R code:</i>
+```{r}
+shapiro.test(residuals(model2))
+```
+<i>Result:</i>
+```
+	Shapiro-Wilk normality test
+
+data:  residuals(model2)
+W = 0.98202, p-value = 0.3653
+```
+
+Since our p-value is greater than the significance level (0.05), we FAIL to reject our null hypothesis and conclude that the normality assumption is satisfied.
 
 4. Equal Variance Assumption (homoscedasticity)
 
 $H_0$: the residual variance is constant across the predictor variables
 $H_A$: the residual variance is NOT constant across the predictor variables.
 
+![Homoscedasticity](/images/equal_variance_assumprion.png)
+Fig.8. Equal variance assumption using residual vs. fitted plot
+
+Based on the residual plot above, we do not detect any pattern for residual distribution. 
+Additionally, the studentized Breusch-Pagan test resulted:
+
+<i>R code:</i>
+```{r}
+bptest(model2)
+```
+<i>Result:</i>
+```
+	studentized Breusch-Pagan test
+
+data:  model2
+BP = 11.966, df = 8, p-value = 0.1527
+```
+
+Based on the residuals plot and Breusch-Pagan test we FAIL to reject our null hypothesis. Therefore, the equal variance assumption (homoscedasticity).
+is also satisfied.
+
 5. Multicollinearity - Variance Inflation Factor
 
 $H_0$: there is no collinearity detected in the model
 $H_A$: collinearity is detected in model
 
+To test the multicollinearity we calculate Variance Inflation Factors.
+
+<i>R code:</i>
+```{r}
+imcdiag(model2, method="VIF")
+```
+<i>Result:</i>
+```
+Call:
+imcdiag(mod = model2, method = "VIF")
+
+
+ VIF Multicollinearity Diagnostics
+
+                                  VIF detection
+EN.ATM.PM25.MC.ZS              1.9957         0
+SH.H2O.BASW.ZS                 1.3279         0
+factor(SE.PRM.AGES)6           6.1204         0
+factor(SE.PRM.AGES)7           5.8766         0
+psycho_p100t                   9.7889         0
+SP.URB.TOTL                    1.1043         0
+beds_mhh_p100t                 1.1796         0
+EN.ATM.PM25.MC.ZS:psycho_p100t 8.7863         0
+
+NOTE:  VIF Method Failed to detect multicollinearity
+
+
+0 --> COLLINEARITY is not detected by the test
+```
+
+Based on the VIF method in R, collinearity was NOT detected by the test. Therefore, we FAIL to
+reject a null hypothesis, and there is no multicollinearity in our model.
+
 6. Outliers
+
 $H_0$: there are no influential outliers in the model
 $H_A$: there are one or more influential outliers in the model
+
+<i>R code:</i>
+```{r}
+plot(model2, which = c(4))
+```
+![Cook's distances](/images/6.outliers.png)
+Fig.9. Cook's distances
+
+<i>R code:</i>
+```{r}
+lev1=hatvalues(model2)
+p = length(coef(model2))
+n = nrow(df3)
+plot(row.names(model.frame(model2)),lev1, main = "Leverage", xlab="observation", ylab = "Leverage Value")
+abline(h = 2 *p/n, lty = 1)
+abline(h = 3 *p/n, lty = 1)
+```
+
+![Leverage plot](/images/6.leverage.png)
+Fig.10. Leverage plot
+
+Based on the graphs above and calculations of Cook’s distances, there seem to be no influential outliers as Cook’s distance for the data points falls under Therefore, we FAIL to reject our null hypothesis and the last assumption (outliers) was also satisfied.
+
+## Conclusion
+In this project, we attempted to build a model that predicts the dependence of schizophrenia prevalence on socioeconomic factors. Based on our analysis, we found the best schizophrenia model to be dependent on the following indicators
+
+<i>R code:</i>
+```{r}
+summary(model2)
+```
+
+<i>Result:</i>
+```
+
+Call:
+lm(formula = Schizo ~ (EN.ATM.PM25.MC.ZS + SH.H2O.BASW.ZS + factor(SE.PRM.AGES) + 
+    psycho_p100t + SP.URB.TOTL + beds_mhh_p100t + EN.ATM.PM25.MC.ZS:psycho_p100t), 
+    data = df3)
+
+Residuals:
+      Min        1Q    Median        3Q       Max 
+-0.043409 -0.009767 -0.001984  0.010884  0.043904 
+
+Coefficients:
+                                 Estimate Std. Error t value Pr(>|t|)    
+(Intercept)                     1.895e-01  2.148e-02   8.822 9.01e-13 ***
+EN.ATM.PM25.MC.ZS              -3.856e-04  1.126e-04  -3.424 0.001064 ** 
+SH.H2O.BASW.ZS                  8.808e-04  1.531e-04   5.754 2.46e-07 ***
+factor(SE.PRM.AGES)6           -3.575e-02  1.131e-02  -3.160 0.002379 ** 
+factor(SE.PRM.AGES)7           -5.063e-02  1.177e-02  -4.303 5.70e-05 ***
+psycho_p100t                    1.132e-03  2.441e-04   4.637 1.72e-05 ***
+SP.URB.TOTL                     1.479e-10  3.284e-11   4.503 2.80e-05 ***
+beds_mhh_p100t                  2.652e-04  6.801e-05   3.900 0.000228 ***
+EN.ATM.PM25.MC.ZS:psycho_p100t -9.690e-06  2.815e-06  -3.443 0.001004 ** 
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 0.01722 on 66 degrees of freedom
+Multiple R-squared:  0.8388,	Adjusted R-squared:  0.8193 
+F-statistic: 42.94 on 8 and 66 DF,  p-value: < 2.2e-16
+```
+where:
+- "EN.ATM.PM25.MC.ZS : PM2.5 air pollution, population exposed to levels exceeding WHO guideline value (% of total)"
+- "SH.H2O.BASW.ZS : People using at least basic drinking water services (% of population)"
+- "SE.PRM.AGES : Primary school starting age (years)"
+- "psycho_p100t : Psychologists working in mental health sector (per 100,000)"
+- "SP.URB.TOTL : Urban population"
+- "beds_mhh_p100t : Beds in mental hospitals (per 100,000)"
+
+In the future, other socioeconomic factors can be included to improve the adjusted R-squared value and the model overall. However, the model can be improved further to add other socioeconomic factors and enhance the model’s predictive power. By incorporating more variables, the model captures a broader range of factors that can contribute to Schizophrenia's prevalence, leading to a more accurate and comprehensive prediction
+
+## Gratitudes 
+
+I would like to special thank [Dr. Quan Long ](https://www.linkedin.com/in/quanlong/) and [Dr. James McCurdy](https://www.linkedin.com/in/mjamesmccurdy/) for the very useful feedback and great insights I received from the course and my project partners [Shrivarshini Balaji](https://www.linkedin.com/in/shrivarshini-balaji-999551188/) and [Niloofar Mirzadzare](https://www.linkedin.com/in/niloofar-mirzadzare-280211271/) for productive cooperation, responsibility and excellent communication.
+
+
+## References 
+[1] Centers for Disease Control and Prevention. (2021). About mental health. Centers for Disease Control and Prevention. Retrieved from https://www.cdc.gov/mentalhealth/learn/index.htm
+[2] World Health Organization. (2023). Mental health. World Health Organization. Retrieved from https://www.who.int/health-topics/mental-health#tab=tab_1
+[3] World Health Organization. (2023). Schizophrenia. World Health Organization. Retrieved from https://www.who.int/news-room/fact-sheets/detail/schizophrenia
+[4] American Psychiatric Association (2023). What is Schizophrenia? Retrieved from https://www.psychiatry.org/patients-families/schizophrenia/what-is-schizophrenia
+[5] Johns Hopkins Medicine (2023). Schizophrenia. Retrieved from https://www.hopkinsmedicine.org/health/conditions-and-diseases/schizophrenia
+[6] Brown AS. (2011). The environment and susceptibility to schizophrenia. Prog Neurobiol;93(1):23-58. doi: 10.1016/j.pneurobio.2010.09.003.
+[7] World Health Organization. (2023). Global Health Estimates. World Health Organization. Retrieved from https://www.who.int/data/global-health-estimates
+[8] The World Bank. (2017). World development indicators: The World Bank. World Development Indicators. Retrieved from: http://wdi.worldbank.org/table/2.12#
+[9] World Health Organization. (2023). Government expenditures on mental health as a percentage of total government expenditures on Health (%). World Health Organization. Retrieved from: https://www.who.int/data/gho/data/indicators/indicator-details/GHO/government-expenditures-on-mental-health-as-a-percentage-of-total-government-expenditures-on-health-(-)
